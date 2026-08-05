@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* Placeholder tokens — replaced with the Stitch palette on feature/11-design-system */
+@theme {
+  --color-brand-50: #eff6ff;
+  --color-brand-500: #2563eb;
+  --color-brand-600: #1d4ed8;
+  --color-brand-900: #1e3a8a;
+}
