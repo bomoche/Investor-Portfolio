@@ -1,6 +1,11 @@
 spring:
   application:
     name: investor-portfolio
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
 
   datasource:
     url: jdbc:h2:mem:enviro365db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
@@ -35,3 +40,4 @@ server:
 logging:
   level:
     "[com.enviro.assessment.junior]": DEBUG
+  
