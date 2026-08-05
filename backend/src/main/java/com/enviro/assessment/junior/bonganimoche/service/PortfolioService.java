@@ -1,5 +1,6 @@
 package com.enviro.assessment.junior.bonganimoche.service;
 
+import com.enviro.assessment.junior.bonganimoche.dto.response.EligibilityResponse;
 import com.enviro.assessment.junior.bonganimoche.dto.response.PortfolioResponse;
 
 /**
@@ -12,4 +13,6 @@ import com.enviro.assessment.junior.bonganimoche.dto.response.PortfolioResponse;
 public interface PortfolioService {
 
     PortfolioResponse getPortfolio(Long investorId);
+
+    EligibilityResponse getEligibility(Long investorId, Long productId);
 }

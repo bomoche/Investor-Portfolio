@@ -5,10 +5,13 @@ import com.enviro.assessment.junior.bonganimoche.dto.response.WithdrawalResponse
 import com.enviro.assessment.junior.bonganimoche.entity.Product;
 import com.enviro.assessment.junior.bonganimoche.entity.WithdrawalNotice;
 import com.enviro.assessment.junior.bonganimoche.entity.enums.WithdrawalStatus;
+import com.enviro.assessment.junior.bonganimoche.exception.ResourceNotFoundException;
 import com.enviro.assessment.junior.bonganimoche.mapper.WithdrawalMapper;
 import com.enviro.assessment.junior.bonganimoche.repository.ProductRepository;
 import com.enviro.assessment.junior.bonganimoche.repository.WithdrawalNoticeRepository;
 import com.enviro.assessment.junior.bonganimoche.service.WithdrawalService;
+import com.enviro.assessment.junior.bonganimoche.service.WithdrawalValidator;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ public class WithdrawalServiceImpl implements WithdrawalService {
     private final ProductRepository productRepository;
     private final WithdrawalNoticeRepository withdrawalNoticeRepository;
     private final WithdrawalMapper withdrawalMapper;
+    private final WithdrawalValidator withdrawalValidator;
 
     private static final String REFERENCE_PREFIX = "WDR";
     private static final int MONETARY_SCALE = 2;
@@ -49,9 +53,11 @@ public class WithdrawalServiceImpl implements WithdrawalService {
         // guessing an id — a broken-access-control vulnerability.
         Product product = productRepository
                 .findByIdAndInvestorId(request.productId(), investorId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Product not found with id " + request.productId()
-                                + " for investor " + investorId));
+                .orElseThrow(() -> ResourceNotFoundException.forProduct(request.productId()));
+
+        // Rules run before any mutation. Because the validator throws, an
+        // invalid request aborts the transaction with the balance untouched.
+        withdrawalValidator.validate(product.getInvestor(), product, request.amount());
 
         // === Business rule enforcement slots in here on feature/06 ===
 

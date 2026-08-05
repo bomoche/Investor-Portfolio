@@ -1,5 +1,6 @@
 package com.enviro.assessment.junior.bonganimoche.controller;
 
+import com.enviro.assessment.junior.bonganimoche.dto.response.EligibilityResponse;
 import com.enviro.assessment.junior.bonganimoche.dto.response.PortfolioResponse;
 import com.enviro.assessment.junior.bonganimoche.service.PortfolioService;
 import lombok.RequiredArgsConstructor;
@@ -33,5 +34,13 @@ public class PortfolioController {
     @GetMapping("/{investorId}/portfolio")
     public ResponseEntity<PortfolioResponse> getPortfolio(@PathVariable Long investorId) {
         return ResponseEntity.ok(portfolioService.getPortfolio(investorId));
+    }
+
+    /** GET /api/investors/{investorId}/products/{productId}/eligibility */
+    @GetMapping("/{investorId}/products/{productId}/eligibility")
+    public ResponseEntity<EligibilityResponse> getEligibility(
+            @PathVariable Long investorId,
+            @PathVariable Long productId) {
+        return ResponseEntity.ok(portfolioService.getEligibility(investorId, productId));
     }
 }
