@@ -1,4 +1,4 @@
-# Enviro365 Investments
+# Enviro365 Investments — Withdrawal Notice System
 
 Full-stack system allowing investors to view portfolios, submit withdrawal notices against validated business rules, and export filtered CSV statements.
 
@@ -99,4 +99,95 @@ Every failure returns the same shape with a stable `errorCode`:
 
 | Status | Meaning |
 |---|---|
-| 400 | Field validation failed — response includes
+| 400 | Field validation failed — response includes `fieldErrors` |
+| 401 | Missing, invalid or expired token; or rejected credentials |
+| 404 | Resource absent or not owned by the caller |
+| 422 | Business rule violation |
+
+400 means the request couldn't be processed as sent (UI highlights form fields); 422 means it was understood and rejected on its merits (UI shows the business message).
+
+---
+
+## Business Rules
+
+- Retirement withdrawals only permitted above age 65
+- Withdrawal cannot exceed the available balance
+- Withdrawal cannot exceed 90% of the available balance
+- All monetary values use `BigDecimal` (precision 19, scale 2); the 90% ceiling rounds **down** to the cent
+
+Rules are enforced in `WithdrawalValidator` before any state is mutated, so a rejected withdrawal leaves balances untouched. They run in the order above, so an under-age investor gets the age message rather than a percentage calculation that doesn't apply.
+
+---
+
+## Architecture
+
+### Backend — Layered
+
+`Controller → Service → Repository → Database`
+
+- **Controller** — HTTP only, no business logic
+- **Service** — business logic and rule validation
+- **Repository** — Spring Data JPA interfaces
+- **Entity** — JPA-mapped tables, never exposed to clients
+- **DTO** — the API contract, separate from the schema
+
+### Frontend — Feature-Sliced
+
+`Pages → Hooks → API Layer → Backend`
+
+- **Pages** — presentation
+- **Hooks** — data fetching, loading and error state
+- **API Layer** — one axios client with token and error interceptors
+
+---
+
+## Advanced Features Implemented
+
+- Global exception handling via `@RestControllerAdvice`
+- DTO layer — entities never leave the service layer
+- Input validation with Jakarta Bean Validation
+- Unit tests with JUnit 5 and Mockito
+- UI validation with server-driven eligibility
+- JWT authentication with Spring Security (beyond the brief)
+
+---
+
+## Testing
+
+```bash
+cd backend
+./mvnw test
+```
+
+- `WithdrawalValidatorTest` — every business rule, including the age boundary, the exact-90% case, and rule precedence
+- `WithdrawalServiceImplTest` — balance debit, before/after snapshots, that violations abort before mutation, and cross-account rejection
+
+---
+
+## Assumptions Made
+
+- "Age > 65" is read literally: 65 does not qualify, 66 does. Pinned by a test so it can't drift silently.
+- Withdrawals complete immediately. `WithdrawalStatus` includes `PENDING` and `REJECTED` so an approval workflow could be added without a schema change.
+- Login identifier is email. The design labelled it "Investor ID"; the entity's unique identifier is email, so the field was relabelled rather than inventing an identifier the API can't resolve.
+- The H2 database is in-memory and rebuilt on every restart, so the grader always gets a clean, seeded state.
+
+---
+
+## AI Tools Disclosure
+
+As permitted by the assessment guidelines:
+
+| Tool | Usage |
+|---|---|
+| **Stitch by Google** | UI/UX design — generated the Material 3 palette, type scale and layouts, ported into Tailwind v4 tokens and rebuilt as React components |
+| **Claude** | Implementation assistance across backend and frontend |
+
+System design and architecture were my own: the layered structure, storing rather than deriving balances, making `Investor` the authentication principal, adding JWT authentication beyond the brief, and the scoping decision to omit screens with no backend. All AI-assisted code was reviewed, run, debugged and verified by me.
+
+---
+
+## Contact
+
+**Bongani Moche**
+bonganimoche@wethinkcode.co.za
+https://github.com/bomoche
