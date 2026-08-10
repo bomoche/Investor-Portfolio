@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import TextField from "../components/common/TextField";
 import Button from "../components/common/Button";
 import Alert from "../components/common/Alert";
+import DemoCredentials from "../components/DemoCredentials";
 
 /**
  * Login screen, built to the Stitch layout.
@@ -28,6 +29,14 @@ export default function LoginPage() {
     setForm((previous) => ({ ...previous, [name]: value }));
     // Clears the field's error as soon as the user starts correcting it.
     setFieldErrors((previous) => ({ ...previous, [name]: undefined }));
+    setServerError(null);
+  }
+
+  /** Fills the form from the demo panel so a reviewer needn't retype. */
+  function useAccount(email, password) {
+    setForm({ email, password });
+    setFieldErrors({});
+    setServerError(null);
   }
 
   /**
@@ -57,7 +66,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(form.email.trim(), form.password);
-      // Returns the user to wherever the guard intercepted them.
+      // Returns the user to wherever the route guard intercepted them.
       const destination = location.state?.from?.pathname ?? "/dashboard";
       navigate(destination, { replace: true });
     } catch (error) {
@@ -69,7 +78,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-full items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md py-8">
         <div className="rounded-xl border border-surface-variant bg-surface-container-lowest p-margin-lg shadow-[0_10px_15px_-3px_rgba(0,0,0,0.1)] md:p-pad-desktop">
           <div className="mb-8 flex flex-col items-center">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary-container text-on-primary-container">
@@ -118,9 +127,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="mt-8 text-center text-body-md text-on-surface-variant">
-          Enviro365 Investments · Junior Developer Assessment
-        </p>
+        <DemoCredentials onUseAccount={useAccount} />
       </div>
     </div>
   );
