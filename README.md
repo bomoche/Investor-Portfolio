@@ -182,7 +182,7 @@ As permitted by the assessment guidelines:
 | **Stitch by Google** | UI/UX design — generated the Material 3 palette, type scale and layouts, ported into Tailwind v4 tokens and rebuilt as React components |
 | **Claude** | Implementation assistance across backend and frontend |
 
-System design and architecture were my own: the layered structure, storing rather than deriving balances, making `Investor` the authentication principal, adding JWT authentication beyond the brief, and the scoping decision to omit screens with no backend. All AI-assisted code was reviewed, run, debugged and verified by me.
+System design and architecture were my own: All AI-assisted code was reviewed, run, debugged and verified by me.
 
 ---
 
