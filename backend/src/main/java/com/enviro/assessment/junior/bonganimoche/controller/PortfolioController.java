@@ -2,45 +2,63 @@ package com.enviro.assessment.junior.bonganimoche.controller;
 
 import com.enviro.assessment.junior.bonganimoche.dto.response.EligibilityResponse;
 import com.enviro.assessment.junior.bonganimoche.dto.response.PortfolioResponse;
+import com.enviro.assessment.junior.bonganimoche.security.InvestorDetails;
 import com.enviro.assessment.junior.bonganimoche.service.PortfolioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * REST endpoints for investor portfolios.
+ * REST endpoints for the authenticated investor's portfolio.
  *
- * The controller stays thin: it maps HTTP to a service call and back. All
- * business logic lives in the service layer, which keeps this testable with
- * MockMvc and a mocked service.
+ * The investor id is no longer a path variable. It comes from the authenticated
+ * principal, which removes an entire class of broken-access-control bug: with
+ * /investors/{id}/portfolio, any logged-in user could read another investor's
+ * portfolio simply by changing the number in the URL.
  *
- * NOTE: investorId is currently a path variable. Once authentication lands on
- * feature/09-auth-security it will be resolved from the security context
- * instead, so one investor cannot request another's portfolio.
+ * The /me prefix is a common REST convention for "the resource belonging to
+ * whoever is making this request".
  */
 @RestController
-@RequestMapping("/investors")
+@RequestMapping("/me")
 @RequiredArgsConstructor
 public class PortfolioController {
 
     private final PortfolioService portfolioService;
 
     /**
-     * GET /api/investors/{investorId}/portfolio
+     * GET /api/me/portfolio
      *
-     * The nested path expresses that a portfolio is a sub-resource of an
-     * investor rather than a standalone entity, following REST conventions.
+     * Returns investor details, every product held, each product's balance and
+     * 90% withdrawal ceiling, and the total portfolio value.
      */
-    @GetMapping("/{investorId}/portfolio")
-    public ResponseEntity<PortfolioResponse> getPortfolio(@PathVariable Long investorId) {
-        return ResponseEntity.ok(portfolioService.getPortfolio(investorId));
+    @GetMapping("/portfolio")
+    public ResponseEntity<PortfolioResponse> getPortfolio(
+            @AuthenticationPrincipal InvestorDetails investor) {
+
+        return ResponseEntity.ok(portfolioService.getPortfolio(investor.getInvestorId()));
     }
 
-    /** GET /api/investors/{investorId}/products/{productId}/eligibility */
-    @GetMapping("/{investorId}/products/{productId}/eligibility")
+    /**
+     * GET /api/me/products/{productId}/eligibility
+     *
+     * Reports whether a product may currently be withdrawn from and what the
+     * maximum is, so the UI can guide the investor before submission rather
+     * than only reporting failure afterwards.
+     *
+     * The service resolves the product scoped to the authenticated investor, so
+     * requesting another investor's product id yields 404 rather than data.
+     */
+    @GetMapping("/products/{productId}/eligibility")
     public ResponseEntity<EligibilityResponse> getEligibility(
-            @PathVariable Long investorId,
+            @AuthenticationPrincipal InvestorDetails investor,
             @PathVariable Long productId) {
-        return ResponseEntity.ok(portfolioService.getEligibility(investorId, productId));
+
+        return ResponseEntity.ok(
+                portfolioService.getEligibility(investor.getInvestorId(), productId));
     }
 }

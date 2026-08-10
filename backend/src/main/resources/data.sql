@@ -7,21 +7,21 @@
 -- failing case available without editing data by hand.
 
 -- Thabo Mokoena, born 1955 — over 65, retirement withdrawals allowed.
-INSERT INTO investors (first_name, last_name, email, password_hash, date_of_birth, created_at)
-VALUES ('Thabo', 'Mokoena', 'thabo.mokoena@enviro365.co.za',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+INSERT INTO investors (first_name, last_name, email, role, password_hash, date_of_birth, created_at)
+VALUES ('Thabo', 'Mokoena', 'thabo.mokoena@enviro365.co.za','INVESTOR',
+        '$2a$10$d9goWXLZM5C0tAf6VoCpbeDUCDYOjh2iwiTZLdqHlr9wMA10MOABy',
         '1955-03-14', CURRENT_TIMESTAMP);
 
 -- Naledi Dlamini, born 1992 — under 65, retirement withdrawals blocked.
-INSERT INTO investors (first_name, last_name, email, password_hash, date_of_birth, created_at)
-VALUES ('Naledi', 'Dlamini', 'naledi.dlamini@enviro365.co.za',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+INSERT INTO investors (first_name, last_name, email, role, password_hash, date_of_birth, created_at)
+VALUES ('Naledi', 'Dlamini', 'naledi.dlamini@enviro365.co.za','INVESTOR',
+        '$2a$10$d9goWXLZM5C0tAf6VoCpbeDUCDYOjh2iwiTZLdqHlr9wMA10MOABy',
         '1992-11-02', CURRENT_TIMESTAMP);
 
 -- Sipho Khumalo, born 1978 — under 65, savings only.
-INSERT INTO investors (first_name, last_name, email, password_hash, date_of_birth, created_at)
-VALUES ('Sipho', 'Khumalo', 'sipho.khumalo@enviro365.co.za',
-        '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+INSERT INTO investors (first_name, last_name, email, role, password_hash, date_of_birth, created_at)
+VALUES ('Sipho', 'Khumalo', 'sipho.khumalo@enviro365.co.za','INVESTOR',
+        '$2a$10$d9goWXLZM5C0tAf6VoCpbeDUCDYOjh2iwiTZLdqHlr9wMA10MOABy',
         '1978-07-21', CURRENT_TIMESTAMP);
 
 -- Thabo's products

@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,9 +30,7 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * 404 — the resource does not exist, or is not owned by the requester.
-     */
+    /** 404 — the resource does not exist, or is not owned by the requester. */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
             ResourceNotFoundException ex, HttpServletRequest request) {
@@ -47,7 +48,8 @@ public class GlobalExceptionHandler {
      *
      * Deliberately not 400: the payload parsed and passed field validation, so
      * the failure is semantic. 422 tells the client the request was understood
-     * and rejected on its merits, which is a meaningful distinction for the UI.
+     * and rejected on its merits, which lets the UI show a business message
+     * rather than highlighting form fields.
      */
     @ExceptionHandler(BusinessRuleViolationException.class)
     public ResponseEntity<ErrorResponse> handleBusinessRuleViolation(
@@ -59,6 +61,64 @@ public class GlobalExceptionHandler {
                 ErrorResponse.of(HttpStatus.UNPROCESSABLE_ENTITY.value(),
                         "Unprocessable Entity", ex.getErrorCode(),
                         ex.getMessage(), request.getRequestURI()));
+    }
+
+    /**
+     * 401 — credentials were rejected at login.
+     *
+     * The message is deliberately generic and identical for an unknown email
+     * and a wrong password, so the response cannot be used to discover which
+     * addresses are registered.
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(
+            BadCredentialsException ex, HttpServletRequest request) {
+
+        log.warn("Failed authentication on {}", request.getRequestURI());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                ErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), "Unauthorized",
+                        "INVALID_CREDENTIALS", "Invalid email or password.",
+                        request.getRequestURI()));
+    }
+
+    /**
+     * 401 — any other authentication failure.
+     *
+     * Placed after the BadCredentialsException handler; Spring picks the most
+     * specific matching handler, so login failures still get the message above.
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(
+            AuthenticationException ex, HttpServletRequest request) {
+
+        log.warn("Authentication failed on {}: {}",
+                request.getRequestURI(), ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                ErrorResponse.of(HttpStatus.UNAUTHORIZED.value(), "Unauthorized",
+                        "AUTHENTICATION_REQUIRED",
+                        "Authentication is required to access this resource.",
+                        request.getRequestURI()));
+    }
+
+    /**
+     * 403 — authenticated, but not permitted.
+     *
+     * Needs an explicit handler: without one the catch-all below would swallow
+     * it and report a 500, hiding a legitimate authorisation decision.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException ex, HttpServletRequest request) {
+
+        log.warn("Access denied on {}", request.getRequestURI());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                ErrorResponse.of(HttpStatus.FORBIDDEN.value(), "Forbidden",
+                        "ACCESS_DENIED",
+                        "You do not have permission to access this resource.",
+                        request.getRequestURI()));
     }
 
     /**

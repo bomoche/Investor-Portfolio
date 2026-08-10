@@ -3,16 +3,17 @@ package com.enviro.assessment.junior.bonganimoche.controller;
 import com.enviro.assessment.junior.bonganimoche.dto.request.WithdrawalRequest;
 import com.enviro.assessment.junior.bonganimoche.dto.response.WithdrawalResponse;
 import com.enviro.assessment.junior.bonganimoche.entity.enums.WithdrawalStatus;
+import com.enviro.assessment.junior.bonganimoche.security.InvestorDetails;
 import com.enviro.assessment.junior.bonganimoche.service.StatementService;
 import com.enviro.assessment.junior.bonganimoche.service.WithdrawalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
@@ -21,13 +22,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * REST endpoints for withdrawal notices.
+ * REST endpoints for the authenticated investor's withdrawal notices.
  *
- * NOTE: investorId is a path variable for now; feature/09-auth-security
- * resolves it from the authenticated principal instead.
+ * As with the portfolio, the investor is resolved from the security context
+ * rather than the URL, so one investor cannot act on another's account.
  */
 @RestController
-@RequestMapping("/investors/{investorId}/withdrawals")
+@RequestMapping("/me/withdrawals")
 @RequiredArgsConstructor
 public class WithdrawalController {
 
@@ -35,33 +36,41 @@ public class WithdrawalController {
     private final StatementService statementService;
 
     /**
-     * POST /api/investors/{investorId}/withdrawals
+     * POST /api/me/withdrawals
      *
      * @Valid triggers the Bean Validation constraints on WithdrawalRequest.
      * A violation throws MethodArgumentNotValidException before the service is
-     * reached; feature/07 turns that into a structured 400 response.
+     * reached, which GlobalExceptionHandler turns into a structured 400.
      *
      * Returns 201 Created — a new resource has been created, so 200 would
      * understate what happened.
      */
     @PostMapping
     public ResponseEntity<WithdrawalResponse> createWithdrawal(
-            @PathVariable Long investorId,
+            @AuthenticationPrincipal InvestorDetails investor,
             @Valid @RequestBody WithdrawalRequest request) {
 
-        WithdrawalResponse response = withdrawalService.createWithdrawal(investorId, request);
+        WithdrawalResponse response =
+                withdrawalService.createWithdrawal(investor.getInvestorId(), request);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /** GET /api/investors/{investorId}/withdrawals */
+    /**
+     * GET /api/me/withdrawals
+     *
+     * Full withdrawal history for the authenticated investor, newest first.
+     */
     @GetMapping
     public ResponseEntity<List<WithdrawalResponse>> getWithdrawalHistory(
-            @PathVariable Long investorId) {
-        return ResponseEntity.ok(withdrawalService.getWithdrawalHistory(investorId));
+            @AuthenticationPrincipal InvestorDetails investor) {
+
+        return ResponseEntity.ok(
+                withdrawalService.getWithdrawalHistory(investor.getInvestorId()));
     }
 
     /**
-     * GET /api/investors/{investorId}/withdrawals/export
+     * GET /api/me/withdrawals/export
      *
      * All query parameters are optional, so the same endpoint serves both a
      * full statement and any filtered subset.
@@ -72,7 +81,7 @@ public class WithdrawalController {
      */
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportStatement(
-            @PathVariable Long investorId,
+            @AuthenticationPrincipal InvestorDetails investor,
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) WithdrawalStatus status,
             @RequestParam(required = false)
@@ -81,7 +90,7 @@ public class WithdrawalController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
         String csv = statementService.generateWithdrawalStatement(
-                investorId, productId, status, from, to);
+                investor.getInvestorId(), productId, status, from, to);
 
         String filename = String.format("withdrawal-statement-%s.csv",
                 LocalDate.now().format(DateTimeFormatter.ISO_DATE));
@@ -95,7 +104,7 @@ public class WithdrawalController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + filename + "\"")
                 // Lets the browser read the header from a cross-origin response,
-                // which the React download handler needs.
+                // which the React download handler needs to name the file.
                 .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS,
                         HttpHeaders.CONTENT_DISPOSITION)
                 .body(body);

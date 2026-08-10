@@ -1,13 +1,10 @@
 spring:
   application:
     name: investor-portfolio
-  mvc:
-    throw-exception-if-no-handler-found: true
-  web:
-    resources:
-      add-mappings: false
 
   datasource:
+    # In-memory database. DB_CLOSE_DELAY=-1 keeps it alive between connections
+    # while the JVM runs; data is intentionally discarded on shutdown.
     url: jdbc:h2:mem:enviro365db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
@@ -19,6 +16,8 @@ spring:
       path: /h2-console
 
   jpa:
+    # Disabled for a REST API: the Hibernate session should not stay open past
+    # the service layer, so lazy loading cannot happen during serialisation.
     open-in-view: false
     hibernate:
       ddl-auto: create-drop
@@ -26,18 +25,41 @@ spring:
     properties:
       hibernate:
         "[format_sql]": true
+    # Runs data.sql after Hibernate creates the schema, not before.
     defer-datasource-initialization: true
 
   sql:
     init:
       mode: always
 
+  mvc:
+    # Lets unmatched paths reach GlobalExceptionHandler as a structured 404
+    # rather than Spring's default error page.
+    throw-exception-if-no-handler-found: true
+
+  web:
+    resources:
+      # Required alongside the setting above — without it Spring tries to serve
+      # unmatched paths as static files and never throws.
+      add-mappings: false
+
 server:
   port: 8080
   servlet:
     context-path: /api
 
+app:
+  jwt:
+    # Development default only. In a real deployment JWT_SECRET is supplied as
+    # an environment variable and never committed. Base64-encoded, at least 256
+    # bits as required by HMAC-SHA256.
+    secret: ${JWT_SECRET:ZW52aXJvMzY1LWp1bmlvci1hc3Nlc3NtZW50LXNlY3JldC1rZXktMjAyNi1oczI1Ng==}
+    expiration-ms: 3600000   # 1 hour
+
+  cors:
+    # Vite dev server. Comma-separated if more than one origin is needed.
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
 logging:
   level:
     "[com.enviro.assessment.junior]": DEBUG
-  
