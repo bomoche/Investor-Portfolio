@@ -2,18 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
-
-/**
- * Placeholder until feature/12 lands the dashboard — proves the auth flow
- * end to end without pulling the whole layout forward into this branch.
- */
-function DashboardPlaceholder() {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <p className="text-headline-sm text-primary">Signed in — dashboard next.</p>
-    </div>
-  );
-}
+import DashboardPage from "./pages/DashboardPage";
 
 export default function App() {
   return (
@@ -25,7 +14,7 @@ export default function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPlaceholder />
+                <DashboardPage />
               </ProtectedRoute>
             }
           />
