@@ -1,16 +1,38 @@
-function App() {
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import LoginPage from "./pages/LoginPage";
+
+/**
+ * Placeholder until feature/12 lands the dashboard — proves the auth flow
+ * end to end without pulling the whole layout forward into this branch.
+ */
+function DashboardPlaceholder() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-brand-900">
-          Enviro365 Investor Portal
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Phase 1 — foundation ready
-        </p>
-      </div>
+    <div className="flex h-full items-center justify-center">
+      <p className="text-headline-sm text-primary">Signed in — dashboard next.</p>
     </div>
-  )
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPlaceholder />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
