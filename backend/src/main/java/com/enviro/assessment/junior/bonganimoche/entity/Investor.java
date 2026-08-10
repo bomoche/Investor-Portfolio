@@ -51,6 +51,14 @@ public class Investor {
     @Column(nullable = false)
     private LocalDate dateOfBirth;
 
+    /**
+     * Single role for now. Stored as a column rather than hard-coded so an
+     * admin tier could be added without a schema change.
+     */
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private String role = "INVESTOR";
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
