@@ -1,4 +1,4 @@
-# Enviro365 Investments — Withdrawal Notice System
+# Enviro365 Investments
 
 Full-stack system allowing investors to view portfolios, submit withdrawal notices against validated business rules, and export filtered CSV statements.
 
